@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: metricflow_time_spine
+    description: "Continuous calendar time spine for MetricFlow semantic calculations."
+    columns:
+      - name: date_day
+        description: "The date representation."
+        granularity: day

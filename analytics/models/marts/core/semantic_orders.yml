@@ -1,0 +1,57 @@
+version: 2
+
+semantic_models:
+  - name: semantic_orders
+    model: ref('fct_orders')
+    description: "Semantic abstraction layer for financial transactions and order metrics."
+    defaults:
+      agg_time_dimension: order_date
+
+    entities:
+      - name: order_id
+        type: primary
+      - name: customer_id
+        type: foreign
+
+    dimensions:
+      - name: order_date
+        type: time
+        type_params:
+          time_granularity: day
+      - name: order_status
+        type: categorical
+
+    measures:
+      - name: order_amount
+        expr: order_amount_usd
+        agg: sum
+        description: "Gross total order amount in USD."
+      - name: order_count
+        expr: order_id
+        agg: count_distinct
+        description: "Distinct count of successfully placed orders."
+
+metrics:
+  - name: gross_revenue
+    description: "Total revenue across all placed and completed orders."
+    type: simple
+    label: "Gross Revenue (USD)"
+    type_params:
+      measure: order_amount
+
+  - name: total_orders
+    description: "Total count of distinct orders."
+    type: simple
+    label: "Total Orders"
+    type_params:
+      measure: order_count
+
+  - name: average_order_value
+    description: "Average revenue generated per order."
+    type: derived
+    label: "Average Order Value (USD)"
+    type_params:
+      expr: gross_revenue / total_orders
+      metrics:
+        - gross_revenue
+        - total_orders
