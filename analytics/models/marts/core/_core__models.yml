@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: "Grain: 1 row per order with payment totals."
+    columns:
+      - name: order_id
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('stg_jaffle_shop__customers')
+              field: customer_id
+      - name: order_amount_usd
+        data_tests:
+          - not_null
+
+  - name: dim_customers
+    description: "Grain: 1 row per customer enriched with lifetime order metrics."
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+      - name: lifetime_value_usd
+        data_tests:
+          - not_null
