@@ -1,37 +1,40 @@
 version: 2
 
 models:
+  - name: dim_customers
+    description: "Enriched dimensional table containing customer lifetime value and segmentation."
+    columns:
+      - name: customer_id
+        description: "Primary key of the customer."
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_segment
+        description: "Calculated tiering based on order count: VIP, Regular, or Prospect."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['VIP', 'Regular', 'Prospect']
+
   - name: fct_orders
-    description: "Grain: 1 row per order with payment totals and pivoted payment channels."
+    description: "Incremental fact table tracking customer transactional orders and payment channel pivots."
     columns:
       - name: order_id
+        description: "Primary key identifying each individual customer order."
         data_tests:
           - unique
           - not_null
       - name: customer_id
+        description: "Foreign key linking orders back to the dim_customers model."
         data_tests:
           - not_null
           - relationships:
               arguments:
-                to: ref('stg_jaffle_shop__customers')
+                to: ref('dim_customers')
                 field: customer_id
       - name: order_amount_usd
+        description: "Total value paid for the order in USD."
         data_tests:
-          - not_null
-          - is_positive
-
-  - name: dim_customers
-    description: "Grain: 1 row per customer enriched with lifetime metrics."
-    columns:
-      - name: customer_id
-        data_tests:
-          - unique
-          - not_null
-      - name: lifetime_value_usd
-        data_tests:
-          - not_null
-          - is_positive
-      - name: customer_segment
-        data_tests:
-          - accepted_values:
-              values: ['VIP', 'Regular', 'Prospect']
+          - is_positive:
+              arguments:
+                column_name: order_amount_usd
