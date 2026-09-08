@@ -25,7 +25,12 @@ select
     m.first_order_date,
     m.most_recent_order_date,
     coalesce(m.total_orders_count, 0) as total_orders_count,
-    coalesce(m.lifetime_spend_usd, 0) as lifetime_value_usd
+    coalesce(m.lifetime_spend_usd, 0) as lifetime_value_usd,
+    case
+        when coalesce(m.lifetime_spend_usd, 0) >= 100 then 'VIP'
+        when coalesce(m.lifetime_spend_usd, 0) > 0 then 'Regular'
+        else 'Prospect'
+    end as customer_segment
 from customers c
 left join customer_metrics m
     on c.customer_id = m.customer_id

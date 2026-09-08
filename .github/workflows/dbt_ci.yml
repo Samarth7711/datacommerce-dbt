@@ -1,0 +1,46 @@
+name: dbt Slim CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'analytics/**'
+
+jobs:
+  dbt_ci:
+    name: Run dbt Tests on PR
+    runs-on: ubuntu-latest
+
+    env:
+      DBT_SNOWFLAKE_ACCOUNT: ${{ secrets.DBT_SNOWFLAKE_ACCOUNT }}
+      DBT_SNOWFLAKE_USER: ${{ secrets.DBT_SNOWFLAKE_USER }}
+      DBT_SNOWFLAKE_PASSWORD: ${{ secrets.DBT_SNOWFLAKE_PASSWORD }}
+      DBT_SNOWFLAKE_ROLE: ${{ secrets.DBT_SNOWFLAKE_ROLE }}
+      DBT_SNOWFLAKE_DATABASE: DATACOMMERCE_ANALYTICS
+      DBT_SNOWFLAKE_WAREHOUSE: DEV_WH
+      # Isolate CI run into a temporary PR schema
+      DBT_SNOWFLAKE_SCHEMA: DBT_CI_PR_${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Check out PR code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install dbt-snowflake
+
+      - name: Run dbt debug
+        working-directory: ./analytics
+        run: dbt debug
+
+      - name: Run dbt Build on Changed Models & Tests
+        working-directory: ./analytics
+        run: |
+          dbt build --select state:modified+

@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: fct_orders
-    description: "Grain: 1 row per order with payment totals."
+    description: "Grain: 1 row per order with payment totals and pivoted payment channels."
     columns:
       - name: order_id
         data_tests:
@@ -12,14 +12,16 @@ models:
         data_tests:
           - not_null
           - relationships:
-              to: ref('stg_jaffle_shop__customers')
-              field: customer_id
+              arguments:
+                to: ref('stg_jaffle_shop__customers')
+                field: customer_id
       - name: order_amount_usd
         data_tests:
           - not_null
+          - is_positive
 
   - name: dim_customers
-    description: "Grain: 1 row per customer enriched with lifetime order metrics."
+    description: "Grain: 1 row per customer enriched with lifetime metrics."
     columns:
       - name: customer_id
         data_tests:
@@ -28,3 +30,8 @@ models:
       - name: lifetime_value_usd
         data_tests:
           - not_null
+          - is_positive
+      - name: customer_segment
+        data_tests:
+          - accepted_values:
+              values: ['VIP', 'Regular', 'Prospect']
