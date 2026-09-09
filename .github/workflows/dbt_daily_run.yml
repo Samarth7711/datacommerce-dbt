@@ -2,16 +2,17 @@ name: dbt Daily Production Run
 
 on:
   schedule:
-    # Runs at 00:00 UTC daily
     - cron: '0 0 * * *'
-  workflow_dispatch: # Allows manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   production_pipeline:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: analytics
+
+    env:
+      DBT_SNOWFLAKE_ACCOUNT: ${{ secrets.DBT_SNOWFLAKE_ACCOUNT }}
+      DBT_SNOWFLAKE_USER: ${{ secrets.DBT_SNOWFLAKE_USER }}
+      DBT_SNOWFLAKE_PASSWORD: ${{ secrets.DBT_SNOWFLAKE_PASSWORD }}
 
     steps:
       - name: Checkout Code
@@ -20,26 +21,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
           cache: 'pip'
 
       - name: Install Dependencies
         run: |
           pip install --upgrade pip
-          pip install dbt-snowflake
+          pip install -r requirements.txt
 
       - name: Run SCD Type 2 Snapshots
-        env:
-          DBT_SNOWFLAKE_ACCOUNT: ${{ secrets.DBT_SNOWFLAKE_ACCOUNT }}
-          DBT_SNOWFLAKE_USER: ${{ secrets.DBT_SNOWFLAKE_USER }}
-          DBT_SNOWFLAKE_PASSWORD: ${{ secrets.DBT_SNOWFLAKE_PASSWORD }}
-          DBT_PROD_SCHEMA: DBT_PROD
-        run: dbt snapshot
+        run: |
+          dbt snapshot --project-dir analytics --profiles-dir analytics --target prod
 
       - name: Run Incremental Models & Tests
-        env:
-          DBT_SNOWFLAKE_ACCOUNT: ${{ secrets.DBT_SNOWFLAKE_ACCOUNT }}
-          DBT_SNOWFLAKE_USER: ${{ secrets.DBT_SNOWFLAKE_USER }}
-          DBT_SNOWFLAKE_PASSWORD: ${{ secrets.DBT_SNOWFLAKE_PASSWORD }}
-          DBT_PROD_SCHEMA: DBT_PROD
-        run: dbt build --select marts
+        run: |
+          dbt build --project-dir analytics --profiles-dir analytics --target prod
