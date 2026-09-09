@@ -7,3 +7,6 @@ logs/
 __pycache__/
 .DS_Store
 # profiles.yml
+
+.venv/
+analytics/.venv/
